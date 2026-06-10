@@ -1,0 +1,13 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE projects (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    api_key UUID NOT NULL UNIQUE,
+    user_id INTEGER REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT NOW()
+);

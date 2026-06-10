@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: analytics-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: analytics
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    container_name: analytics-redis
+    ports:
+      - "6380:6379"
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: analytics-clickhouse
+    environment:
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: admin
+    ports:
+      - "8123:8123"
+      - "9000:9000"
