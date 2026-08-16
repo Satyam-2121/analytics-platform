@@ -305,3 +305,4 @@ analytics-platform
 └── README.md
 ```
 Updated project documentation.
+Analytics API secured with project API keys.
