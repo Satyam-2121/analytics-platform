@@ -306,3 +306,4 @@ analytics-platform
 ```
 Updated project documentation.
 Analytics API secured with project API keys.
+Cache layer powered by Redis.
