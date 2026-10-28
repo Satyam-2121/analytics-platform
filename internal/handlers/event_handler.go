@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"analytics-platform/internal/middleware"
 	"analytics-platform/internal/models"
 	"analytics-platform/internal/repositories"
 )
@@ -30,6 +31,12 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	projectID, ok := middleware.ProjectID(r.Context())
+	if !ok || event.ProjectID != projectID {
+		http.Error(w, "project does not match api key", http.StatusForbidden)
 		return
 	}
 

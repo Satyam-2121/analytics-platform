@@ -1,13 +1,26 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 
-	"analytics-platform/internal/repositories"
+	"analytics-platform/internal/models"
 )
 
+type projectIDKey struct{}
+
+type projectLookup interface {
+	GetByAPIKey(apiKey string) (*models.Project, error)
+}
+
+// ProjectID returns the project authenticated by APIKeyMiddleware.
+func ProjectID(ctx context.Context) (int, bool) {
+	id, ok := ctx.Value(projectIDKey{}).(int)
+	return id, ok
+}
+
 func APIKeyMiddleware(
-	projectRepo *repositories.ProjectRepository,
+	projectRepo projectLookup,
 	next http.HandlerFunc,
 ) http.HandlerFunc {
 
@@ -20,12 +33,13 @@ func APIKeyMiddleware(
 			return
 		}
 
-		_, err := projectRepo.GetByAPIKey(apiKey)
+		project, err := projectRepo.GetByAPIKey(apiKey)
 		if err != nil {
 			http.Error(w, "invalid api key", http.StatusUnauthorized)
 			return
 		}
 
-		next(w, r)
+		ctx := context.WithValue(r.Context(), projectIDKey{}, project.ID)
+		next(w, r.WithContext(ctx))
 	}
 }

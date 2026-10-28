@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"analytics-platform/internal/middleware"
 	"analytics-platform/internal/repositories"
 	"analytics-platform/internal/services"
 )
@@ -35,6 +36,10 @@ func (h *AnalyticsHandler) GetTotalEvents(
 	projectID, err := strconv.Atoi(projectIDStr)
 	if err != nil {
 		http.Error(w, "invalid project_id", http.StatusBadRequest)
+		return
+	}
+	if authenticatedID, ok := middleware.ProjectID(r.Context()); !ok || projectID != authenticatedID {
+		http.Error(w, "project does not match api key", http.StatusForbidden)
 		return
 	}
 
@@ -79,6 +84,10 @@ func (h *AnalyticsHandler) GetTopPages(
 	projectID, err := strconv.Atoi(projectIDStr)
 	if err != nil {
 		http.Error(w, "invalid project_id", http.StatusBadRequest)
+		return
+	}
+	if authenticatedID, ok := middleware.ProjectID(r.Context()); !ok || projectID != authenticatedID {
+		http.Error(w, "project does not match api key", http.StatusForbidden)
 		return
 	}
 
