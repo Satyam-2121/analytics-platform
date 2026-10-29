@@ -8,17 +8,26 @@ import (
 
 	"analytics-platform/internal/middleware"
 	"analytics-platform/internal/repositories"
-	"analytics-platform/internal/services"
 )
 
+type analyticsReader interface {
+	GetTotalEvents(projectID int) (uint64, error)
+	GetTopPages(projectID int) ([]repositories.PageStat, error)
+}
+
+type analyticsCache interface {
+	Get(key string) (string, error)
+	Set(key, value string) error
+}
+
 type AnalyticsHandler struct {
-	AnalyticsRepo *repositories.AnalyticsRepository
-	CacheService  *services.CacheService
+	AnalyticsRepo analyticsReader
+	CacheService  analyticsCache
 }
 
 func NewAnalyticsHandler(
-	repo *repositories.AnalyticsRepository,
-	cache *services.CacheService,
+	repo analyticsReader,
+	cache analyticsCache,
 ) *AnalyticsHandler {
 	return &AnalyticsHandler{
 		AnalyticsRepo: repo,
@@ -51,11 +60,10 @@ func (h *AnalyticsHandler) GetTotalEvents(
 	cached, err := h.CacheService.Get(cacheKey)
 
 	if err == nil {
-		json.NewEncoder(w).Encode(map[string]string{
-			"source": "redis",
-			"total":  cached,
-		})
-		return
+		if total, parseErr := strconv.ParseUint(cached, 10, 64); parseErr == nil {
+			json.NewEncoder(w).Encode(map[string]uint64{"total_events": total})
+			return
+		}
 	}
 
 	total, err := h.AnalyticsRepo.GetTotalEvents(projectID)
