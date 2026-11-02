@@ -61,6 +61,16 @@ func (r *AnalyticsRepository) GetTopPages(projectID int) ([]PageStat, error) {
 
 	defer rows.Close()
 
+	return collectPageStats(rows)
+}
+
+type pageRows interface {
+	Next() bool
+	Scan(dest ...any) error
+	Err() error
+}
+
+func collectPageStats(rows pageRows) ([]PageStat, error) {
 	var stats []PageStat
 
 	for rows.Next() {
@@ -73,6 +83,9 @@ func (r *AnalyticsRepository) GetTopPages(projectID int) ([]PageStat, error) {
 		}
 
 		stats = append(stats, stat)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return stats, nil
