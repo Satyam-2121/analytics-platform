@@ -2,18 +2,22 @@ package handlers
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"analytics-platform/internal/middleware"
 	"analytics-platform/internal/models"
-	"analytics-platform/internal/repositories"
 )
 
-type EventHandler struct {
-	EventRepo *repositories.EventRepository
+type eventWriter interface {
+	CreateEvent(models.Event) error
 }
 
-func NewEventHandler(repo *repositories.EventRepository) *EventHandler {
+type EventHandler struct {
+	EventRepo eventWriter
+}
+
+func NewEventHandler(repo eventWriter) *EventHandler {
 	return &EventHandler{
 		EventRepo: repo,
 	}
@@ -28,9 +32,14 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 
 	var event models.Event
 
-	err := json.NewDecoder(r.Body).Decode(&event)
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&event)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		http.Error(w, "request body must contain a single JSON event", http.StatusBadRequest)
 		return
 	}
 
