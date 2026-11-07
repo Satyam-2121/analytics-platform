@@ -9,12 +9,16 @@ import (
 )
 
 type EventRepository struct {
-	DB *database.Database
+	CH eventStore
+}
+
+type eventStore interface {
+	Exec(context.Context, string, ...any) error
 }
 
 func NewEventRepository(db *database.Database) *EventRepository {
 	return &EventRepository{
-		DB: db,
+		CH: db.CH,
 	}
 }
 
@@ -39,13 +43,18 @@ func (r *EventRepository) CreateEvent(event models.Event) error {
 	)
 	`
 
-	return r.DB.CH.Exec(
+	timestamp := event.Timestamp
+	if timestamp.IsZero() {
+		timestamp = time.Now()
+	}
+
+	return r.CH.Exec(
 		context.Background(),
 		query,
 		event.Event,
 		event.Page,
 		event.UserID,
 		event.ProjectID,
-		time.Now(),
+		timestamp,
 	)
 }
