@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"analytics-platform/internal/middleware"
@@ -14,6 +15,17 @@ import (
 type stubAnalytics struct {
 	total uint64
 	calls int
+}
+
+func TestTopPagesReturnsEmptyArrayWhenNoEventsExist(t *testing.T) {
+	h := NewAnalyticsHandler(&stubAnalytics{}, &stubAnalyticsCache{})
+	req := httptest.NewRequest(http.MethodGet, "/analytics/pages?project_id=1", nil)
+	req.Header.Set("X-API-Key", "project-one-key")
+	res := httptest.NewRecorder()
+	middleware.APIKeyMiddleware(testProjectLookup{}, h.GetTopPages)(res, req)
+	if res.Code != http.StatusOK || strings.TrimSpace(res.Body.String()) != "[]" {
+		t.Fatalf("got status %d, body %q; want 200 and []", res.Code, res.Body.String())
+	}
 }
 
 func (s *stubAnalytics) GetTotalEvents(int) (uint64, error) {

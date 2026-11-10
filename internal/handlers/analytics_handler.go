@@ -104,6 +104,9 @@ func (h *AnalyticsHandler) GetTopPages(
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if pages == nil {
+		pages = []repositories.PageStat{}
+	}
 
 	json.NewEncoder(w).Encode(pages)
 }
