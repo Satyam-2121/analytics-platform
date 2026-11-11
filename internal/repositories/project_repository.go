@@ -3,6 +3,9 @@ package repositories
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+
 	"analytics-platform/internal/database"
 	"analytics-platform/internal/models"
 )
@@ -50,6 +53,10 @@ func (r *ProjectRepository) CreateProject(name string, userID int) (*models.Proj
 func (r *ProjectRepository) GetByAPIKey(
 	apiKey string,
 ) (*models.Project, error) {
+	var key pgtype.UUID
+	if err := key.Scan(apiKey); err != nil {
+		return nil, pgx.ErrNoRows
+	}
 
 	query := `
 	SELECT id, name, api_key, user_id, created_at
@@ -62,7 +69,7 @@ func (r *ProjectRepository) GetByAPIKey(
 	err := r.DB.Postgres.QueryRow(
 		context.Background(),
 		query,
-		apiKey,
+		key,
 	).Scan(
 		&project.ID,
 		&project.Name,

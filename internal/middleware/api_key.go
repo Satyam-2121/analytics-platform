@@ -2,7 +2,11 @@ package middleware
 
 import (
 	"context"
+	"errors"
+	"log"
 	"net/http"
+
+	"github.com/jackc/pgx/v5"
 
 	"analytics-platform/internal/models"
 )
@@ -35,7 +39,12 @@ func APIKeyMiddleware(
 
 		project, err := projectRepo.GetByAPIKey(apiKey)
 		if err != nil {
-			http.Error(w, "invalid api key", http.StatusUnauthorized)
+			if errors.Is(err, pgx.ErrNoRows) {
+				http.Error(w, "invalid api key", http.StatusUnauthorized)
+			} else {
+				log.Printf("api key lookup failed: %v", err)
+				http.Error(w, "authentication temporarily unavailable", http.StatusServiceUnavailable)
+			}
 			return
 		}
 
