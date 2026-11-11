@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -68,7 +69,8 @@ func (h *AnalyticsHandler) GetTotalEvents(
 
 	total, err := h.AnalyticsRepo.GetTotalEvents(projectID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("total events query failed: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -101,7 +103,8 @@ func (h *AnalyticsHandler) GetTopPages(
 
 	pages, err := h.AnalyticsRepo.GetTopPages(projectID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("top pages query failed: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 	if pages == nil {
