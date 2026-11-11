@@ -26,6 +26,9 @@ func TestTopPagesReturnsEmptyArrayWhenNoEventsExist(t *testing.T) {
 	if res.Code != http.StatusOK || strings.TrimSpace(res.Body.String()) != "[]" {
 		t.Fatalf("got status %d, body %q; want 200 and []", res.Code, res.Body.String())
 	}
+	if got := res.Header().Get("Content-Type"); got != "application/json" {
+		t.Errorf("got Content-Type %q, want application/json", got)
+	}
 }
 
 func (s *stubAnalytics) GetTotalEvents(int) (uint64, error) {
@@ -70,6 +73,9 @@ func TestTotalEventsResponseIsConsistentAcrossCacheStates(t *testing.T) {
 			middleware.APIKeyMiddleware(testProjectLookup{}, h.GetTotalEvents)(res, req)
 			if res.Code != http.StatusOK {
 				t.Fatalf("got status %d, want 200", res.Code)
+			}
+			if got := res.Header().Get("Content-Type"); got != "application/json" {
+				t.Errorf("got Content-Type %q, want application/json", got)
 			}
 			var body map[string]interface{}
 			if err := json.Unmarshal(res.Body.Bytes(), &body); err != nil {

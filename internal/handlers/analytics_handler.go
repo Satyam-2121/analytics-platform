@@ -62,6 +62,7 @@ func (h *AnalyticsHandler) GetTotalEvents(
 
 	if err == nil {
 		if total, parseErr := strconv.ParseUint(cached, 10, 64); parseErr == nil {
+			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]uint64{"total_events": total})
 			return
 		}
@@ -79,6 +80,7 @@ func (h *AnalyticsHandler) GetTotalEvents(
 		strconv.FormatUint(total, 10),
 	)
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]uint64{
 		"total_events": total,
 	})
@@ -111,5 +113,6 @@ func (h *AnalyticsHandler) GetTopPages(
 		pages = []repositories.PageStat{}
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(pages)
 }

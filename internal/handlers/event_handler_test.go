@@ -44,6 +44,9 @@ func TestCreateEventRequiresSingleJSONValue(t *testing.T) {
 				t.Fatalf("got status %d, want %d: %s", res.Code, tc.wantStatus, res.Body.String())
 			}
 			if tc.wantStatus == http.StatusCreated {
+				if got := res.Header().Get("Content-Type"); got != "application/json" {
+					t.Errorf("got Content-Type %q, want application/json", got)
+				}
 				want := models.Event{Event: "page_view", Page: "/pricing", UserID: "u123", ProjectID: 1}
 				if len(repo.events) != 1 || repo.events[0] != want {
 					t.Fatalf("got persisted events %#v, want one %#v", repo.events, want)
