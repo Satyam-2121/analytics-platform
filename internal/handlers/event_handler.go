@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"analytics-platform/internal/middleware"
 	"analytics-platform/internal/models"
@@ -47,6 +48,10 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 	projectID, ok := middleware.ProjectID(r.Context())
 	if !ok || event.ProjectID != projectID {
 		http.Error(w, "project does not match api key", http.StatusForbidden)
+		return
+	}
+	if strings.TrimSpace(event.Event) == "" {
+		http.Error(w, "event name is required", http.StatusBadRequest)
 		return
 	}
 

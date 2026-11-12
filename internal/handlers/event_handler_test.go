@@ -14,6 +14,23 @@ type stubEventWriter struct {
 	events []models.Event
 }
 
+func TestCreateEventRequiresEventName(t *testing.T) {
+	for _, body := range []string{
+		`{"project_id":1}`,
+		`{"event":"","project_id":1}`,
+		`{"event":"  \t ","project_id":1}`,
+	} {
+		repo := &stubEventWriter{}
+		req := httptest.NewRequest(http.MethodPost, "/events", strings.NewReader(body))
+		req.Header.Set("X-API-Key", "project-one-key")
+		res := httptest.NewRecorder()
+		middleware.APIKeyMiddleware(testProjectLookup{}, NewEventHandler(repo).CreateEvent)(res, req)
+		if res.Code != http.StatusBadRequest || len(repo.events) != 0 {
+			t.Errorf("body %s: got status %d and %d stored events", body, res.Code, len(repo.events))
+		}
+	}
+}
+
 func (s *stubEventWriter) CreateEvent(event models.Event) error {
 	s.events = append(s.events, event)
 	return nil
