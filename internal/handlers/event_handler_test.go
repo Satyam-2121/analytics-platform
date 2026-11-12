@@ -14,6 +14,22 @@ type stubEventWriter struct {
 	events []models.Event
 }
 
+func TestCreateEventRejectsOversizedBodies(t *testing.T) {
+	for _, body := range []string{
+		`{"event":"` + strings.Repeat("a", maxEventBodyBytes) + `","project_id":1}`,
+		`{"event":"view","project_id":1}` + strings.Repeat(" ", maxEventBodyBytes),
+	} {
+		repo := &stubEventWriter{}
+		req := httptest.NewRequest(http.MethodPost, "/events", strings.NewReader(body))
+		req.Header.Set("X-API-Key", "project-one-key")
+		res := httptest.NewRecorder()
+		middleware.APIKeyMiddleware(testProjectLookup{}, NewEventHandler(repo).CreateEvent)(res, req)
+		if res.Code != http.StatusRequestEntityTooLarge || len(repo.events) != 0 {
+			t.Errorf("got status %d and %d stored events", res.Code, len(repo.events))
+		}
+	}
+}
+
 func TestCreateEventRequiresEventName(t *testing.T) {
 	for _, body := range []string{
 		`{"project_id":1}`,

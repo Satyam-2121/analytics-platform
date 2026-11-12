@@ -19,6 +19,7 @@ The primary goal of this project is to simulate the architecture used by modern 
 Applications can send analytics events through a REST endpoint.
 The `event` field must contain a nonblank event name; missing or blank names
 are rejected with HTTP 400.
+Event request bodies are limited to 1 MiB; larger requests receive HTTP 413.
 
 Example:
 

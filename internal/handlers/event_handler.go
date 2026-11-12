@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -14,6 +15,8 @@ import (
 type eventWriter interface {
 	CreateEvent(models.Event) error
 }
+
+const maxEventBodyBytes = 1 << 20
 
 type EventHandler struct {
 	EventRepo eventWriter
@@ -34,13 +37,24 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 
 	var event models.Event
 
+	r.Body = http.MaxBytesReader(w, r.Body, maxEventBodyBytes)
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&event)
 	if err != nil {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := decoder.Decode(new(any)); err != io.EOF {
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
 		http.Error(w, "request body must contain a single JSON event", http.StatusBadRequest)
 		return
 	}
