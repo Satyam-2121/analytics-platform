@@ -17,6 +17,29 @@ type stubAnalytics struct {
 	calls int
 }
 
+func TestAnalyticsEndpointsRejectNonGETRequests(t *testing.T) {
+	h := NewAnalyticsHandler(nil, nil)
+	for _, tc := range []struct {
+		name, target string
+		handler      http.HandlerFunc
+	}{
+		{"total events", "/analytics/events?project_id=1", h.GetTotalEvents},
+		{"top pages", "/analytics/pages?project_id=1", h.GetTopPages},
+	} {
+		for _, method := range []string{http.MethodPost, http.MethodDelete} {
+			t.Run(tc.name+" "+method, func(t *testing.T) {
+				req := httptest.NewRequest(method, tc.target, nil)
+				req.Header.Set("X-API-Key", "project-one-key")
+				res := httptest.NewRecorder()
+				middleware.APIKeyMiddleware(testProjectLookup{}, tc.handler)(res, req)
+				if res.Code != http.StatusMethodNotAllowed || res.Header().Get("Allow") != http.MethodGet {
+					t.Fatalf("got status %d, Allow %q", res.Code, res.Header().Get("Allow"))
+				}
+			})
+		}
+	}
+}
+
 func TestTopPagesReturnsEmptyArrayWhenNoEventsExist(t *testing.T) {
 	h := NewAnalyticsHandler(&stubAnalytics{}, &stubAnalyticsCache{})
 	req := httptest.NewRequest(http.MethodGet, "/analytics/pages?project_id=1", nil)

@@ -40,6 +40,11 @@ func (h *AnalyticsHandler) GetTotalEvents(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
 	projectIDStr := r.URL.Query().Get("project_id")
 
@@ -90,6 +95,11 @@ func (h *AnalyticsHandler) GetTopPages(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
 	projectIDStr := r.URL.Query().Get("project_id")
 
