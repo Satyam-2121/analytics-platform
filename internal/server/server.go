@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"analytics-platform/internal/database"
 	"analytics-platform/internal/handlers"
@@ -72,7 +73,12 @@ func Start(db *database.Database) {
 	log.Println("REGISTERED: /analytics/pages")
 	log.Println("Server running on :8080")
 
-	err := http.ListenAndServe(":8080", mux)
+	server := &http.Server{
+		Addr:              ":8080",
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+	err := server.ListenAndServe()
 	if err != nil {
 		log.Fatal(err)
 	}
