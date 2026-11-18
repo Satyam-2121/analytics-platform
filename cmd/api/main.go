@@ -1,17 +1,20 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"time"
-    
-	"analytics-platform/internal/server"
+
 	"analytics-platform/internal/database"
 	"analytics-platform/internal/models"
 	"analytics-platform/internal/repositories"
+	"analytics-platform/internal/server"
 )
 
 func main() {
+	seedDemo := flag.Bool("seed-demo", false, "create a demo user, project, and event for local development")
+	flag.Parse()
 
 	postgres, err := database.ConnectPostgres()
 	if err != nil {
@@ -34,9 +37,16 @@ func main() {
 		CH:       clickhouseConn,
 	}
 
+	if *seedDemo {
+		createDemoData(db)
+	}
+	server.Start(db)
+}
+
+func createDemoData(db *database.Database) {
 	userRepo := repositories.NewUserRepository(db)
 
-	email := fmt.Sprintf("test%d@example.com", time.Now().Unix())
+	email := fmt.Sprintf("test%d@example.com", time.Now().UnixNano())
 
 	user, err := userRepo.CreateUser(email)
 	if err != nil {
@@ -85,7 +95,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("All services connected successfully")
-
-	server.Start(db)
+	log.Println("Demo data created")
 }

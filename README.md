@@ -226,6 +226,13 @@ Responsibilities:
 
 ---
 
+## Starting the API
+
+After setting up the databases, run `go run ./cmd/api` to start the server
+without creating sample records. For local development, run
+`go run ./cmd/api -seed-demo` to create a sample user, project, and event.
+The demo startup prints the new project's API key.
+
 ## API Endpoints
 
 ### Create Event
