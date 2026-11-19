@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -47,7 +48,7 @@ func TestCreateEventRequiresEventName(t *testing.T) {
 	}
 }
 
-func (s *stubEventWriter) CreateEvent(event models.Event) error {
+func (s *stubEventWriter) CreateEvent(_ context.Context, event models.Event) error {
 	s.events = append(s.events, event)
 	return nil
 }

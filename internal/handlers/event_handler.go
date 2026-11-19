@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -13,7 +14,7 @@ import (
 )
 
 type eventWriter interface {
-	CreateEvent(models.Event) error
+	CreateEvent(context.Context, models.Event) error
 }
 
 const maxEventBodyBytes = 1 << 20
@@ -69,7 +70,7 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.EventRepo.CreateEvent(event)
+	err = h.EventRepo.CreateEvent(r.Context(), event)
 	if err != nil {
 		log.Printf("event storage failed: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)

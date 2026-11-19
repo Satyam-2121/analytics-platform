@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -69,7 +70,7 @@ func createDemoData(db *database.Database) {
 
 	eventRepo := repositories.NewEventRepository(db)
 
-	err = eventRepo.CreateEvent(models.Event{
+	err = eventRepo.CreateEvent(context.Background(), models.Event{
 		Event:     "page_view",
 		Page:      "/pricing",
 		UserID:    "u123",

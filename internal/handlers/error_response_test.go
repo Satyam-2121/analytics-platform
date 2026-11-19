@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +17,7 @@ var storageFailure = errors.New("sensitive database connection detail")
 
 type failingStore struct{}
 
-func (failingStore) CreateEvent(models.Event) error                   { return storageFailure }
+func (failingStore) CreateEvent(context.Context, models.Event) error  { return storageFailure }
 func (failingStore) GetTotalEvents(int) (uint64, error)               { return 0, storageFailure }
 func (failingStore) GetTopPages(int) ([]repositories.PageStat, error) { return nil, storageFailure }
 

@@ -22,7 +22,7 @@ func NewEventRepository(db *database.Database) *EventRepository {
 	}
 }
 
-func (r *EventRepository) CreateEvent(event models.Event) error {
+func (r *EventRepository) CreateEvent(ctx context.Context, event models.Event) error {
 
 	query := `
 	INSERT INTO events
@@ -49,7 +49,7 @@ func (r *EventRepository) CreateEvent(event models.Event) error {
 	}
 
 	return r.CH.Exec(
-		context.Background(),
+		ctx,
 		query,
 		event.Event,
 		event.Page,
