@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,13 +13,13 @@ import (
 )
 
 type analyticsReader interface {
-	GetTotalEvents(projectID int) (uint64, error)
-	GetTopPages(projectID int) ([]repositories.PageStat, error)
+	GetTotalEvents(ctx context.Context, projectID int) (uint64, error)
+	GetTopPages(ctx context.Context, projectID int) ([]repositories.PageStat, error)
 }
 
 type analyticsCache interface {
-	Get(key string) (string, error)
-	Set(key, value string) error
+	Get(ctx context.Context, key string) (string, error)
+	Set(ctx context.Context, key, value string) error
 }
 
 type AnalyticsHandler struct {
@@ -63,7 +64,8 @@ func (h *AnalyticsHandler) GetTotalEvents(
 		projectID,
 	)
 
-	cached, err := h.CacheService.Get(cacheKey)
+	ctx := r.Context()
+	cached, err := h.CacheService.Get(ctx, cacheKey)
 
 	if err == nil {
 		if total, parseErr := strconv.ParseUint(cached, 10, 64); parseErr == nil {
@@ -73,7 +75,7 @@ func (h *AnalyticsHandler) GetTotalEvents(
 		}
 	}
 
-	total, err := h.AnalyticsRepo.GetTotalEvents(projectID)
+	total, err := h.AnalyticsRepo.GetTotalEvents(ctx, projectID)
 	if err != nil {
 		log.Printf("total events query failed: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -81,6 +83,7 @@ func (h *AnalyticsHandler) GetTotalEvents(
 	}
 
 	h.CacheService.Set(
+		ctx,
 		cacheKey,
 		strconv.FormatUint(total, 10),
 	)
@@ -113,7 +116,7 @@ func (h *AnalyticsHandler) GetTopPages(
 		return
 	}
 
-	pages, err := h.AnalyticsRepo.GetTopPages(projectID)
+	pages, err := h.AnalyticsRepo.GetTopPages(r.Context(), projectID)
 	if err != nil {
 		log.Printf("top pages query failed: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)

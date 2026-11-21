@@ -17,9 +17,13 @@ var storageFailure = errors.New("sensitive database connection detail")
 
 type failingStore struct{}
 
-func (failingStore) CreateEvent(context.Context, models.Event) error  { return storageFailure }
-func (failingStore) GetTotalEvents(int) (uint64, error)               { return 0, storageFailure }
-func (failingStore) GetTopPages(int) ([]repositories.PageStat, error) { return nil, storageFailure }
+func (failingStore) CreateEvent(context.Context, models.Event) error { return storageFailure }
+func (failingStore) GetTotalEvents(context.Context, int) (uint64, error) {
+	return 0, storageFailure
+}
+func (failingStore) GetTopPages(context.Context, int) ([]repositories.PageStat, error) {
+	return nil, storageFailure
+}
 
 func TestStorageErrorsAreNotExposedToClients(t *testing.T) {
 	events := NewEventHandler(failingStore{})

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -13,8 +14,9 @@ import (
 )
 
 type stubAnalytics struct {
-	total uint64
-	calls int
+	total    uint64
+	calls    int
+	queryErr error
 }
 
 func TestAnalyticsEndpointsRejectNonGETRequests(t *testing.T) {
@@ -54,25 +56,56 @@ func TestTopPagesReturnsEmptyArrayWhenNoEventsExist(t *testing.T) {
 	}
 }
 
-func (s *stubAnalytics) GetTotalEvents(int) (uint64, error) {
+func (s *stubAnalytics) GetTotalEvents(ctx context.Context, _ int) (uint64, error) {
 	s.calls++
-	return s.total, nil
+	s.queryErr = ctx.Err()
+	return s.total, s.queryErr
 }
 
-func (s *stubAnalytics) GetTopPages(int) ([]repositories.PageStat, error) {
-	return nil, nil
+func (s *stubAnalytics) GetTopPages(ctx context.Context, _ int) ([]repositories.PageStat, error) {
+	s.queryErr = ctx.Err()
+	return nil, s.queryErr
 }
 
 type stubAnalyticsCache struct {
 	value            string
 	err              error
 	setKey, setValue string
+	getContextErr    error
 }
 
-func (s *stubAnalyticsCache) Get(string) (string, error) { return s.value, s.err }
-func (s *stubAnalyticsCache) Set(key, value string) error {
+func (s *stubAnalyticsCache) Get(ctx context.Context, _ string) (string, error) {
+	s.getContextErr = ctx.Err()
+	return s.value, s.err
+}
+func (s *stubAnalyticsCache) Set(_ context.Context, key, value string) error {
 	s.setKey, s.setValue = key, value
 	return nil
+}
+
+func TestAnalyticsReadsPassRequestCancellation(t *testing.T) {
+	for _, path := range []string{"/analytics/events", "/analytics/pages"} {
+		t.Run(path, func(t *testing.T) {
+			repo := &stubAnalytics{}
+			cache := &stubAnalyticsCache{err: errors.New("cache miss")}
+			h := NewAnalyticsHandler(repo, cache)
+			handler := h.GetTopPages
+			if path == "/analytics/events" {
+				handler = h.GetTotalEvents
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+			req := httptest.NewRequestWithContext(ctx, http.MethodGet, path+"?project_id=1", nil)
+			req.Header.Set("X-API-Key", "project-one-key")
+			middleware.APIKeyMiddleware(testProjectLookup{}, handler)(httptest.NewRecorder(), req)
+			if !errors.Is(repo.queryErr, context.Canceled) {
+				t.Errorf("query received context error %v, want context.Canceled", repo.queryErr)
+			}
+			if path == "/analytics/events" && !errors.Is(cache.getContextErr, context.Canceled) {
+				t.Errorf("cache read received context error %v, want context.Canceled", cache.getContextErr)
+			}
+		})
+	}
 }
 
 func TestTotalEventsResponseIsConsistentAcrossCacheStates(t *testing.T) {

@@ -85,14 +85,14 @@ func createDemoData(db *database.Database) {
 
 	analyticsRepo := repositories.NewAnalyticsRepository(db)
 
-	total, err := analyticsRepo.GetTotalEvents(project.ID)
+	total, err := analyticsRepo.GetTotalEvents(context.Background(), project.ID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	log.Printf("Total Events: %d\n", total)
 
-	_, err = analyticsRepo.GetTopPages(project.ID)
+	_, err = analyticsRepo.GetTopPages(context.Background(), project.ID)
 	if err != nil {
 		log.Fatal(err)
 	}

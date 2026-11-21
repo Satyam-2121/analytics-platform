@@ -21,11 +21,11 @@ func NewAnalyticsRepository(db *database.Database) *AnalyticsRepository {
 	}
 }
 
-func (r *AnalyticsRepository) GetTotalEvents(projectID int) (uint64, error) {
+func (r *AnalyticsRepository) GetTotalEvents(ctx context.Context, projectID int) (uint64, error) {
 	var count uint64
 
 	err := r.DB.CH.QueryRow(
-		context.Background(),
+		ctx,
 		`
 		SELECT count(*)
 		FROM events
@@ -41,10 +41,10 @@ func (r *AnalyticsRepository) GetTotalEvents(projectID int) (uint64, error) {
 	return count, nil
 }
 
-func (r *AnalyticsRepository) GetTopPages(projectID int) ([]PageStat, error) {
+func (r *AnalyticsRepository) GetTopPages(ctx context.Context, projectID int) ([]PageStat, error) {
 
 	rows, err := r.DB.CH.Query(
-		context.Background(),
+		ctx,
 		`
 		SELECT page, count(*)
 		FROM events

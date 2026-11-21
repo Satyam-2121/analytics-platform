@@ -18,12 +18,13 @@ func NewCacheService(redisClient *redis.Client) *CacheService {
 }
 
 func (c *CacheService) Set(
+	ctx context.Context,
 	key string,
 	value string,
 ) error {
 
 	return c.Redis.Set(
-		context.Background(),
+		ctx,
 		key,
 		value,
 		5*time.Minute,
@@ -31,11 +32,12 @@ func (c *CacheService) Set(
 }
 
 func (c *CacheService) Get(
+	ctx context.Context,
 	key string,
 ) (string, error) {
 
 	return c.Redis.Get(
-		context.Background(),
+		ctx,
 		key,
 	).Result()
 }
