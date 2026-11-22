@@ -51,6 +51,7 @@ func (r *ProjectRepository) CreateProject(name string, userID int) (*models.Proj
 }
 
 func (r *ProjectRepository) GetByAPIKey(
+	ctx context.Context,
 	apiKey string,
 ) (*models.Project, error) {
 	var key pgtype.UUID
@@ -67,7 +68,7 @@ func (r *ProjectRepository) GetByAPIKey(
 	var project models.Project
 
 	err := r.DB.Postgres.QueryRow(
-		context.Background(),
+		ctx,
 		query,
 		key,
 	).Scan(

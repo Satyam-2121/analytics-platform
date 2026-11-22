@@ -14,7 +14,7 @@ import (
 type projectIDKey struct{}
 
 type projectLookup interface {
-	GetByAPIKey(apiKey string) (*models.Project, error)
+	GetByAPIKey(ctx context.Context, apiKey string) (*models.Project, error)
 }
 
 // ProjectID returns the project authenticated by APIKeyMiddleware.
@@ -37,7 +37,7 @@ func APIKeyMiddleware(
 			return
 		}
 
-		project, err := projectRepo.GetByAPIKey(apiKey)
+		project, err := projectRepo.GetByAPIKey(r.Context(), apiKey)
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				http.Error(w, "invalid api key", http.StatusUnauthorized)

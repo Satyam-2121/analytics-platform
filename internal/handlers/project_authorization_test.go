@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +14,7 @@ import (
 
 type testProjectLookup struct{}
 
-func (testProjectLookup) GetByAPIKey(key string) (*models.Project, error) {
+func (testProjectLookup) GetByAPIKey(_ context.Context, key string) (*models.Project, error) {
 	if key != "project-one-key" {
 		return nil, errors.New("unknown key")
 	}

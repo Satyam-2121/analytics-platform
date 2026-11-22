@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -14,7 +15,33 @@ import (
 
 type lookupResult struct{ err error }
 
-func (l lookupResult) GetByAPIKey(string) (*models.Project, error) { return nil, l.err }
+func (l lookupResult) GetByAPIKey(context.Context, string) (*models.Project, error) {
+	return nil, l.err
+}
+
+type contextLookup struct {
+	ctx context.Context
+}
+
+func (l *contextLookup) GetByAPIKey(ctx context.Context, _ string) (*models.Project, error) {
+	l.ctx = ctx
+	return nil, ctx.Err()
+}
+
+func TestAPIKeyLookupReceivesRequestCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	r := httptest.NewRequestWithContext(ctx, http.MethodGet, "/", nil)
+	r.Header.Set("X-API-Key", "some-key")
+	lookup := &contextLookup{}
+	h := APIKeyMiddleware(lookup, func(http.ResponseWriter, *http.Request) {
+		t.Fatal("request continued after the lookup was canceled")
+	})
+	h(httptest.NewRecorder(), r)
+	if lookup.ctx == nil || !errors.Is(lookup.ctx.Err(), context.Canceled) {
+		t.Fatalf("lookup did not receive the canceled request context")
+	}
+}
 
 func TestLookupFailuresReturnAppropriateStatus(t *testing.T) {
 	tests := []struct {
