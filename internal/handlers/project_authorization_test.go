@@ -41,6 +41,9 @@ func TestProjectAuthorization(t *testing.T) {
 			if res.Code != http.StatusForbidden {
 				t.Fatalf("got status %d, want %d", res.Code, http.StatusForbidden)
 			}
+			if got := res.Header().Get("Cache-Control"); got != "private, no-store" {
+				t.Fatalf("got Cache-Control %q, want private, no-store", got)
+			}
 		})
 	}
 }
@@ -59,5 +62,8 @@ func TestAPIKeyMiddlewarePassesAuthenticatedProject(t *testing.T) {
 	handler(res, req)
 	if res.Code != http.StatusNoContent {
 		t.Fatalf("got status %d, want %d", res.Code, http.StatusNoContent)
+	}
+	if got := res.Header().Get("Cache-Control"); got != "private, no-store" {
+		t.Fatalf("got Cache-Control %q, want private, no-store", got)
 	}
 }
