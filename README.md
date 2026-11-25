@@ -228,6 +228,14 @@ Responsibilities:
 
 ## Starting the API
 
+On a fresh Compose database, PostgreSQL runs `migrations/001_init.sql` to
+create the user and project tables. If you already started PostgreSQL with an
+empty database before the migration was mounted, apply it once from the repo root:
+
+```bash
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U admin -d analytics < migrations/001_init.sql
+```
+
 After setting up the databases, run `go run ./cmd/api` to start the server
 without creating sample records. For local development, run
 `go run ./cmd/api -seed-demo` to create a sample user, project, and event.
