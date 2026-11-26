@@ -22,11 +22,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	redisClient, err := database.ConnectRedis()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	clickhouseConn, err := database.ConnectClickHouse()
 	if err != nil {
 		log.Fatal(err)
@@ -34,7 +29,7 @@ func main() {
 
 	db := &database.Database{
 		Postgres: postgres,
-		Redis:    redisClient,
+		Redis:    database.NewRedisClient(),
 		CH:       clickhouseConn,
 	}
 

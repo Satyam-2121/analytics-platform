@@ -84,6 +84,8 @@ Response:
 ### Redis Caching
 
 Frequently requested analytics results are cached in Redis.
+The API can start while Redis is unavailable and queries ClickHouse when the
+cache lookup fails. It resumes caching once Redis is reachable.
 
 Benefits:
 
